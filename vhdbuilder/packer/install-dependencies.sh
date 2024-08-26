@@ -162,8 +162,14 @@ if [[ $OS == $MARINER_OS_NAME ]]; then
     fixCBLMarinerPermissions
     addMarinerNvidiaRepo
     overrideNetworkConfig || exit 1
-    if grep -q "kata" <<< "$FEATURE_FLAGS"; then
+    # specifically 'kata' present in FEATURE_FLAGS
+    if grep -Eq "(^|[^-])\bkata\b($|[^-])" <<< "$FEATURE_FLAGS"; then
       installKataDeps
+      enableMarinerKata
+    fi
+    # specifically 'kata-cc' present in FEATURE_FLAGS
+    if grep -Eq "\bkata-cc\b" <<< "$FEATURE_FLAGS"; then
+      installKataCCDeps
       enableMarinerKata
     fi
     disableTimesyncd
