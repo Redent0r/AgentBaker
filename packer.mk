@@ -8,6 +8,18 @@ ifeq (${ARCHITECTURE},ARM64)
 endif
 GOHOSTARCH = $(shell go env GOHOSTARCH)
 
+# ---- TEMPORARY DEBUG (do NOT merge): keep the Packer VM + temp resource group ----
+# alive on failure and emit verbose Packer logs, so we can inspect the kata
+# reboot hang (serial console / boot diagnostics) instead of Packer tearing the
+# VM down. Revert this block before merging.
+#   PACKER_ON_ERROR=-on-error=abort  -> skip cleanup, leave pkr-Resource-Group-* + pkrvm* in place
+#   PACKER_LOG=1 / PACKER_LOG_PATH   -> full Packer + azure-arm SSH retry logs to a file
+PACKER_ON_ERROR ?= -on-error=abort
+PACKER_LOG ?= 1
+PACKER_LOG_PATH ?= $(CURDIR)/packer-debug.log
+export PACKER_LOG PACKER_LOG_PATH
+# ---- END TEMPORARY DEBUG ----
+
 build-packer: setup-golang generate-prefetch-scripts build-image-fetcher build-aks-node-controller build-lister-binary
 ifeq (${ARCHITECTURE},ARM64)
 	@echo "${MODE}: Building with Hyper-v generation 2 ARM64 VM"
@@ -59,7 +71,7 @@ ifeq ($(findstring cvm,$(FEATURE_FLAGS)),cvm)
 	@packer build -timestamp-ui  -var-file=vhdbuilder/packer/settings.json vhdbuilder/packer/vhd-image-builder-mariner-cvm.json
 else
 	@echo "Using packer template file vhd-image-builder-mariner.json"
-	@packer build -timestamp-ui  -var-file=vhdbuilder/packer/settings.json vhdbuilder/packer/vhd-image-builder-mariner.json
+	@packer build $(PACKER_ON_ERROR) -timestamp-ui  -var-file=vhdbuilder/packer/settings.json vhdbuilder/packer/vhd-image-builder-mariner.json
 endif
 else ifeq (${OS_SKU},Flatcar)
 	@echo "Using packer template file vhd-image-builder-flatcar.json"
