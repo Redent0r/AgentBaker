@@ -1,0 +1,22 @@
+Test configuration:
+  Cluster: mariner-kata
+  Pool: old66nvme
+  Image: AzureLinuxV3gen2:1.1785886971.3925
+  VM size: Standard_L8s_v3
+  Nodes: 4
+  Started: 20260813T232819Z
+aks-old66nvme-11206079-vmss000000	True	KubeletReady	kubelet is posting ready status
+aks-old66nvme-11206079-vmss000001	True	KubeletReady	kubelet is posting ready status
+aks-old66nvme-11206079-vmss000002	False	KubeletNotReady	[container runtime is down, container runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni plugin not initialized]
+aks-old66nvme-11206079-vmss000003	True	KubeletReady	kubelet is posting ready status
+node/aks-old66nvme-11206079-vmss000000 condition met
+node/aks-old66nvme-11206079-vmss000001 condition met
+node/aks-old66nvme-11206079-vmss000002 condition met
+node/aks-old66nvme-11206079-vmss000003 condition met
+Completed: 20260813T233630Z
+Elapsed: 00:08:11 (491 seconds)
+NAME                                STATUS   ROLES    AGE     VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                    KERNEL-VERSION         CONTAINER-RUNTIME
+aks-old66nvme-11206079-vmss000000   Ready    <none>   7m5s    v1.35.6   10.224.0.14   <none>        Microsoft Azure Linux 3.0   6.6.137.mshv2-1.azl3   containerd://2.2.4
+aks-old66nvme-11206079-vmss000001   Ready    <none>   6m18s   v1.35.6   10.224.0.11   <none>        Microsoft Azure Linux 3.0   6.6.137.mshv2-1.azl3   containerd://2.2.4
+aks-old66nvme-11206079-vmss000002   Ready    <none>   7m      v1.35.6   10.224.0.13   <none>        Microsoft Azure Linux 3.0   6.6.137.mshv2-1.azl3   containerd://2.2.4
+aks-old66nvme-11206079-vmss000003   Ready    <none>   6m21s   v1.35.6   10.224.0.12   <none>        Microsoft Azure Linux 3.0   6.6.137.mshv2-1.azl3   containerd://2.2.4

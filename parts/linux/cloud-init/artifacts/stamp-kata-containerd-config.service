@@ -1,7 +1,5 @@
 [Unit]
 Description=Stamp the desired Kata + erofs containerd config once after node provisioning completes
-After=containerd.service
-Requires=containerd.service
 
 [Service]
 Type=oneshot
