@@ -69,15 +69,27 @@ root = "{{.KubeletConfig.GetContainerDataDir}}"{{- end}}
   Root = ""
   CriuPath = ""
   SystemdCgroup = false
-[proxy_plugins]
-  [proxy_plugins.tardev]
-    type = "snapshot"
-    address = "/run/containerd/tardev-snapshotter.sock"
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc]
-  snapshotter = "tardev"
+  snapshotter = "erofs"
   runtime_type = "io.containerd.kata-cc.v2"
   privileged_without_host_devices = true
   pod_annotations = ["io.katacontainers.*"]
+  container_annotations = ["io.katacontainers.*"]
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc.options]
-    ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-clh-snp.toml"
+    ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-openvmm-azure-snp-runtime-rs.toml"
+[plugins."io.containerd.snapshotter.v1.erofs"]
+  default_size = "0"
+  dmverity_mode = "on"
+[plugins."io.containerd.differ.v1.erofs"]
+  enable_dmverity = true
+  enable_tar_index = false
+  mkfs_options = ["-T0", "--mkfs-time", "--sort=none"]
+# unpack_config replaces the defaults, so overlayfs is listed for runc pods.
+[plugins."io.containerd.transfer.v1.local"]
+  unpack_config = [
+    {platform = "linux/amd64", snapshotter = "erofs", differ = "erofs"},
+    {platform = "linux/amd64", snapshotter = "overlayfs", differ = "walking"},
+  ]
+[plugins."io.containerd.service.v1.diff-service"]
+  default = ["erofs", "walking"]
 {{- end}}
