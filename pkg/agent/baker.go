@@ -1415,8 +1415,7 @@ type ContainerdConfigTemplate string
 // duplicate them in CSE base64-encoded, and pick the right one.
 // they're identical except for GPU runtime class.
 //
-// ASSUMPTION (kata-cc on OpenVMM SNP): the runtime config file name is a stub until the 4.1.0.kata1
-// recipes land, and containerd2 2.2.4 supports the EROFS dm-verity options used for kata nodes.
+// ASSUMPTION (kata-cc on OpenVMM SNP): containerd2 supports the EROFS dm-verity options used for kata nodes.
 const (
 	containerdV1ConfigTemplate ContainerdConfigTemplate = `version = 2
 oom_score = -999{{if HasDataDir }}
