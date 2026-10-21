@@ -313,6 +313,13 @@ copyPackerFiles() {
       KATA_IMAGE_SRC=/home/packer/kata-containers.img
       KATA_IMAGE_DEST=$KATA_CONFIG_DIR/kata-containers.img
       cpAndMode $KATA_IMAGE_SRC $KATA_IMAGE_DEST 0755
+      # shellcheck disable=SC3010
+      if [[ ",${FEATURE_FLAGS}," == *",kata-cc,"* ]]; then
+        # kata-cc (OpenVMM SNP) UVM; the names must match configuration-openvmm-azure-snp-runtime-rs(-debug).toml.
+        for file in kata-containers.img kata-openvmm-snp.bin kata-openvmm-snp-debug.bin reference-info-base64; do
+          cpAndMode "/home/packer/kata-cc/$file" "$KATACC_CONFIG_DIR/$file" 0644
+        done
+      fi
     fi
   fi
 
