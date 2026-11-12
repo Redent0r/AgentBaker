@@ -1023,7 +1023,7 @@ testKataCC() {
   fi
 
   local katacc_dir=/opt/confidential-containers/share/kata-containers
-  for f in kata-containers.img kata-openvmm-snp.bin kata-openvmm-snp-debug.bin reference-info-base64; do
+  for f in kata-containers.img kata-containers-igvm.img kata-containers-igvm-debug.img reference-info-base64; do
     [ -s "$katacc_dir/$f" ] || err $test "$katacc_dir/$f is missing or empty"
   done
   [ -x /usr/local/bin/containerd-shim-kata-cc-v2 ] || err $test "containerd-shim-kata-cc-v2 is missing"

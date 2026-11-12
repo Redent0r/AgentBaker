@@ -316,7 +316,7 @@ copyPackerFiles() {
       # shellcheck disable=SC3010
       if [[ ",${FEATURE_FLAGS}," == *",kata-cc,"* ]]; then
         # kata-cc (OpenVMM SNP) UVM; the names must match configuration-openvmm-azure-snp-runtime-rs(-debug).toml.
-        for file in kata-containers.img kata-openvmm-snp.bin kata-openvmm-snp-debug.bin reference-info-base64; do
+        for file in kata-containers.img kata-containers-igvm.img kata-containers-igvm-debug.img reference-info-base64; do
           cpAndMode "/home/packer/kata-cc/$file" "$KATACC_CONFIG_DIR/$file" 0644
         done
       fi
