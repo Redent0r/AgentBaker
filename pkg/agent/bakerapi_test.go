@@ -174,9 +174,45 @@ var _ = Describe("AgentBaker API implementation tests", func() {
 				Expect(err).NotTo(HaveOccurred())
 				rendered = string(decoded)
 				Expect(rendered).To(ContainSubstring("runtime_type = \"io.containerd.kata-cc.v2\""))
-				Expect(rendered).To(ContainSubstring("configuration-clh-snp.toml"))
+				Expect(rendered).To(ContainSubstring("configuration-openvmm-azure-snp-runtime-rs.toml"))
+				Expect(rendered).To(ContainSubstring(`dmverity_mode = "on"`))
+				Expect(rendered).To(ContainSubstring(`enable_dmverity = true`))
+				Expect(rendered).To(ContainSubstring(`default_size = "0"`))
+				Expect(rendered).NotTo(ContainSubstring("runtimes.kata-v2]"))
+				Expect(rendered).NotTo(ContainSubstring("tardev"))
 				if tmpl == containerdV2ConfigTemplate || tmpl == containerdV2NoGPUConfigTemplate {
 					Expect(rendered).To(ContainSubstring(`[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata-cc]`))
+				}
+			}
+		})
+		It("registers kata-v2 and no kata-cc on the plain AZL3 Kata image", func() {
+			config.AgentPoolProfile.Distro = datamodel.AKSAzureLinuxV3Gen2Kata
+			for _, tmpl := range []ContainerdConfigTemplate{containerdV1ConfigTemplate, containerdV1NoGPUConfigTemplate, containerdV2ConfigTemplate, containerdV2NoGPUConfigTemplate} {
+				rendered, err := containerdConfigFromTemplate(config, config.AgentPoolProfile, tmpl)
+				Expect(err).NotTo(HaveOccurred())
+				decoded, err := base64.StdEncoding.DecodeString(rendered)
+				Expect(err).NotTo(HaveOccurred())
+				rendered = string(decoded)
+				Expect(rendered).To(ContainSubstring("runtimes.kata-v2]"))
+				Expect(rendered).To(ContainSubstring(`default_size = "10G"`))
+				Expect(rendered).NotTo(ContainSubstring("kata-cc"))
+				Expect(rendered).NotTo(ContainSubstring("dmverity"))
+				Expect(rendered).NotTo(ContainSubstring("tardev"))
+			}
+		})
+		It("keeps the tardev snapshotter on the Azure Linux 2 Kata image", func() {
+			config.AgentPoolProfile.Distro = datamodel.AKSAzureLinuxV2Gen2Kata
+			for _, tmpl := range []ContainerdConfigTemplate{containerdV1ConfigTemplate, containerdV1NoGPUConfigTemplate, containerdV2ConfigTemplate, containerdV2NoGPUConfigTemplate} {
+				rendered, err := containerdConfigFromTemplate(config, config.AgentPoolProfile, tmpl)
+				Expect(err).NotTo(HaveOccurred())
+				decoded, err := base64.StdEncoding.DecodeString(rendered)
+				Expect(err).NotTo(HaveOccurred())
+				rendered = string(decoded)
+				Expect(rendered).To(ContainSubstring("[proxy_plugins.tardev]"))
+				Expect(rendered).NotTo(ContainSubstring("dmverity"))
+				Expect(rendered).NotTo(ContainSubstring("configuration-openvmm"))
+				if tmpl != containerdV2NoGPUConfigTemplate {
+					Expect(rendered).To(ContainSubstring("configuration-clh-snp.toml"))
 				}
 			}
 		})

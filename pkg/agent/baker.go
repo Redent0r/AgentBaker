@@ -1167,6 +1167,9 @@ func getContainerServiceFuncMap(config *datamodel.NodeBootstrappingConfiguration
 		"IsAzureLinuxV3KataCC": func() bool {
 			return profile.Distro == datamodel.AKSAzureLinuxV3Gen2KataCC
 		},
+		"IsAzureLinuxV3": func() bool {
+			return profile.Distro.IsAzureLinuxV3Distro()
+		},
 		"IsAzlOSGuard": func() bool {
 			return profile.Distro.IsAzureLinuxOSGuardDistro() ||
 				profile.Distro == datamodel.CustomizedImageLinuxGuard
@@ -2076,7 +2079,12 @@ oom_score = -999{{if HasDataDir }}
 root = "{{GetDataDir}}"{{- end}}
 {{- if IsKata }}
 [plugins."io.containerd.snapshotter.v1.erofs"]
+{{- if IsAzureLinuxV3KataCC }}
+  default_size = "0"
+  dmverity_mode = "on"
+{{- else}}
   default_size = "10G"
+{{- end}}
   enable_fsverity = false
   ovl_mount_options = []
 
@@ -2084,6 +2092,9 @@ root = "{{GetDataDir}}"{{- end}}
   default = ["erofs", "walking"]
 
 [plugins."io.containerd.differ.v1.erofs"]
+{{- if IsAzureLinuxV3KataCC }}
+  enable_dmverity = true
+{{- end}}
   mkfs_options = ["-T0", "--mkfs-time", "--sort=none"]
   enable_tar_index = false
 {{- end}}
@@ -2153,6 +2164,16 @@ root = "{{GetDataDir}}"{{- end}}
   snapshotter = "overlayfs"
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata.options]
     ConfigPath = "/usr/share/defaults/kata-containers/configuration.toml"
+{{- if IsAzureLinuxV3KataCC }}
+# kata-v2 is not registered: it isn't expected to work with the kata-cc EROFS (dm-verity) settings above.
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc]
+  snapshotter = "erofs"
+  runtime_type = "io.containerd.kata-cc.v2"
+  privileged_without_host_devices = true
+  pod_annotations = ["io.katacontainers.*"]
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc.options]
+    ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-openvmm-azure-snp-runtime-rs.toml"
+{{- else}}
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-v2]
   runtime_path = "/usr/local/bin/containerd-shim-kata-v2-rs"
   runtime_type = "io.containerd.kata.v2"
@@ -2161,6 +2182,7 @@ root = "{{GetDataDir}}"{{- end}}
   snapshotter = "erofs"
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-v2.options]
     ConfigPath = "/usr/share/defaults/kata-containers/configuration-clh-azure-runtime-rs-v2.toml"
+{{- if not IsAzureLinuxV3 }}
 [proxy_plugins]
   [proxy_plugins.tardev]
     type = "snapshot"
@@ -2173,13 +2195,20 @@ root = "{{GetDataDir}}"{{- end}}
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc.options]
     ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-clh-snp.toml"
 {{- end}}
+{{- end}}
+{{- end}}
 `
 	containerdV2ConfigTemplate ContainerdConfigTemplate = `version = 2
 oom_score = -999{{if HasDataDir }}
 root = "{{GetDataDir}}"{{- end}}
 {{- if IsKata }}
 [plugins."io.containerd.snapshotter.v1.erofs"]
+{{- if IsAzureLinuxV3KataCC }}
+  default_size = "0"
+  dmverity_mode = "on"
+{{- else}}
   default_size = "10G"
+{{- end}}
   enable_fsverity = false
   ovl_mount_options = []
 
@@ -2187,6 +2216,9 @@ root = "{{GetDataDir}}"{{- end}}
   default = ["erofs", "walking"]
 
 [plugins."io.containerd.differ.v1.erofs"]
+{{- if IsAzureLinuxV3KataCC }}
+  enable_dmverity = true
+{{- end}}
   mkfs_options = ["-T0", "--mkfs-time", "--sort=none"]
   enable_tar_index = false
 {{- end}}
@@ -2248,6 +2280,23 @@ root = "{{GetDataDir}}"{{- end}}
   snapshotter = "overlayfs"
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata.options]
     ConfigPath = "/usr/share/defaults/kata-containers/configuration.toml"
+{{- if IsAzureLinuxV3KataCC }}
+# kata-v2 is not registered: it isn't expected to work with the kata-cc EROFS (dm-verity) settings above.
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc]
+  snapshotter = "erofs"
+  runtime_type = "io.containerd.kata-cc.v2"
+  privileged_without_host_devices = true
+  pod_annotations = ["io.katacontainers.*"]
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc.options]
+    ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-openvmm-azure-snp-runtime-rs.toml"
+[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata-cc]
+  snapshotter = "erofs"
+  runtime_type = "io.containerd.kata-cc.v2"
+  privileged_without_host_devices = true
+  pod_annotations = ["io.katacontainers.*"]
+  [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata-cc.options]
+    ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-openvmm-azure-snp-runtime-rs.toml"
+{{- else}}
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-v2]
   runtime_path = "/usr/local/bin/containerd-shim-kata-v2-rs"
   runtime_type = "io.containerd.kata.v2"
@@ -2256,6 +2305,7 @@ root = "{{GetDataDir}}"{{- end}}
   snapshotter = "erofs"
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-v2.options]
     ConfigPath = "/usr/share/defaults/kata-containers/configuration-clh-azure-runtime-rs-v2.toml"
+{{- if not IsAzureLinuxV3 }}
 [proxy_plugins]
   [proxy_plugins.tardev]
     type = "snapshot"
@@ -2267,14 +2317,7 @@ root = "{{GetDataDir}}"{{- end}}
   pod_annotations = ["io.katacontainers.*"]
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc.options]
     ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-clh-snp.toml"
-{{- if IsAzureLinuxV3KataCC }}
-[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata-cc]
-  snapshotter = "tardev"
-  runtime_type = "io.containerd.kata-cc.v2"
-  privileged_without_host_devices = true
-  pod_annotations = ["io.katacontainers.*"]
-  [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata-cc.options]
-    ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-clh-snp.toml"
+{{- end}}
 {{- end}}
 {{- end}}
 `
@@ -2283,7 +2326,12 @@ oom_score = -999{{if HasDataDir }}
 root = "{{GetDataDir}}"{{- end}}
 {{- if IsKata }}
 [plugins."io.containerd.snapshotter.v1.erofs"]
+{{- if IsAzureLinuxV3KataCC }}
+  default_size = "0"
+  dmverity_mode = "on"
+{{- else}}
   default_size = "10G"
+{{- end}}
   enable_fsverity = false
   ovl_mount_options = []
 
@@ -2291,6 +2339,9 @@ root = "{{GetDataDir}}"{{- end}}
   default = ["erofs", "walking"]
 
 [plugins."io.containerd.differ.v1.erofs"]
+{{- if IsAzureLinuxV3KataCC }}
+  enable_dmverity = true
+{{- end}}
   mkfs_options = ["-T0", "--mkfs-time", "--sort=none"]
   enable_tar_index = false
 {{- end}}
@@ -2339,6 +2390,16 @@ root = "{{GetDataDir}}"{{- end}}
   snapshotter = "overlayfs"
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata.options]
     ConfigPath = "/usr/share/defaults/kata-containers/configuration.toml"
+{{- if IsAzureLinuxV3KataCC }}
+# kata-v2 is not registered: it isn't expected to work with the kata-cc EROFS (dm-verity) settings above.
+[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata-cc]
+  snapshotter = "erofs"
+  runtime_type = "io.containerd.kata-cc.v2"
+  privileged_without_host_devices = true
+  pod_annotations = ["io.katacontainers.*"]
+  [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata-cc.options]
+    ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-openvmm-azure-snp-runtime-rs.toml"
+{{- else}}
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-v2]
   runtime_path = "/usr/local/bin/containerd-shim-kata-v2-rs"
   runtime_type = "io.containerd.kata.v2"
@@ -2347,18 +2408,12 @@ root = "{{GetDataDir}}"{{- end}}
   snapshotter = "erofs"
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-v2.options]
     ConfigPath = "/usr/share/defaults/kata-containers/configuration-clh-azure-runtime-rs-v2.toml"
+{{- if not IsAzureLinuxV3 }}
 [proxy_plugins]
   [proxy_plugins.tardev]
     type = "snapshot"
     address = "/run/containerd/tardev-snapshotter.sock"
-{{- if IsAzureLinuxV3KataCC }}
-[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata-cc]
-  snapshotter = "tardev"
-  runtime_type = "io.containerd.kata-cc.v2"
-  privileged_without_host_devices = true
-  pod_annotations = ["io.katacontainers.*"]
-  [plugins."io.containerd.cri.v1.runtime".containerd.runtimes.kata-cc.options]
-    ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-clh-snp.toml"
+{{- end}}
 {{- end}}
 {{- end}}
 `
@@ -2367,7 +2422,12 @@ oom_score = -999{{if HasDataDir }}
 root = "{{GetDataDir}}"{{- end}}
 {{- if IsKata }}
 [plugins."io.containerd.snapshotter.v1.erofs"]
+{{- if IsAzureLinuxV3KataCC }}
+  default_size = "0"
+  dmverity_mode = "on"
+{{- else}}
   default_size = "10G"
+{{- end}}
   enable_fsverity = false
   ovl_mount_options = []
 
@@ -2375,6 +2435,9 @@ root = "{{GetDataDir}}"{{- end}}
   default = ["erofs", "walking"]
 
 [plugins."io.containerd.differ.v1.erofs"]
+{{- if IsAzureLinuxV3KataCC }}
+  enable_dmverity = true
+{{- end}}
   mkfs_options = ["-T0", "--mkfs-time", "--sort=none"]
   enable_tar_index = false
 {{- end}}
@@ -2428,6 +2491,16 @@ root = "{{GetDataDir}}"{{- end}}
   snapshotter = "overlayfs"
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata.options]
     ConfigPath = "/usr/share/defaults/kata-containers/configuration.toml"
+{{- if IsAzureLinuxV3KataCC }}
+# kata-v2 is not registered: it isn't expected to work with the kata-cc EROFS (dm-verity) settings above.
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc]
+  snapshotter = "erofs"
+  runtime_type = "io.containerd.kata-cc.v2"
+  privileged_without_host_devices = true
+  pod_annotations = ["io.katacontainers.*"]
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc.options]
+    ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-openvmm-azure-snp-runtime-rs.toml"
+{{- else}}
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-v2]
   runtime_path = "/usr/local/bin/containerd-shim-kata-v2-rs"
   runtime_type = "io.containerd.kata.v2"
@@ -2436,6 +2509,7 @@ root = "{{GetDataDir}}"{{- end}}
   snapshotter = "erofs"
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-v2.options]
     ConfigPath = "/usr/share/defaults/kata-containers/configuration-clh-azure-runtime-rs-v2.toml"
+{{- if not IsAzureLinuxV3 }}
 [proxy_plugins]
   [proxy_plugins.tardev]
     type = "snapshot"
@@ -2447,6 +2521,8 @@ root = "{{GetDataDir}}"{{- end}}
   pod_annotations = ["io.katacontainers.*"]
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc.options]
     ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-clh-snp.toml"
+{{- end}}
+{{- end}}
 {{- end}}
 `
 )
