@@ -183,4 +183,7 @@ message Configuration {
   // Indicates whether the node should be provisioned using only custom data.
   // When true, the node will not rely on CSE for reporting provisioning status.
   bool custom_data_only_provisioning = 47;
+
+  // Specifies if it is a Kata-CC (OpenVMM SNP) node. Only meaningful when is_kata is set.
+  bool is_kata_cc = 48;
 }

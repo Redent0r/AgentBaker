@@ -782,6 +782,37 @@ func TestContainerdKataConfigMatchesNodeBootstrappingConfig(t *testing.T) {
 	}
 }
 
+func TestContainerdKataCCConfig(t *testing.T) {
+	config := &aksnodeconfigv1.Configuration{
+		IsKata:   true,
+		IsKataCc: true,
+	}
+
+	for _, version := range []string{"", "1.7.22", "2.3.7"} {
+		for _, noGPU := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/noGPU=%t", version, noGPU), func(t *testing.T) {
+				got, err := containerdConfigFromAKSNodeConfig(config, noGPU, version)
+				require.NoError(t, err)
+
+				for _, want := range []string{
+					`default_size = "0"`,
+					`dmverity_mode = "on"`,
+					`enable_dmverity = true`,
+					`[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata]`,
+					`[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc]`,
+					`runtime_type = "io.containerd.kata-cc.v2"`,
+					`ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-openvmm-azure-snp-runtime-rs.toml"`,
+				} {
+					require.Contains(t, got, want)
+				}
+				require.NotContains(t, got, `runtimes.kata-v2]`)
+				require.NotContains(t, got, `tardev`)
+				require.NotContains(t, got, `configuration-clh-snp.toml`)
+			})
+		}
+	}
+}
+
 func Test_getContainerdConfigV2(t *testing.T) {
 	type args struct {
 		aksnodeconfig *aksnodeconfigv1.Configuration

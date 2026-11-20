@@ -3,7 +3,12 @@ oom_score = -999{{if getHasDataDir .KubeletConfig}}
 root = "{{.KubeletConfig.GetContainerDataDir}}"{{- end}}
 {{- if .GetIsKata }}
 [plugins."io.containerd.snapshotter.v1.erofs"]
+{{- if .GetIsKataCc }}
+  default_size = "0"
+  dmverity_mode = "on"
+{{- else}}
   default_size = "10G"
+{{- end}}
   enable_fsverity = false
   ovl_mount_options = []
 
@@ -11,6 +16,9 @@ root = "{{.KubeletConfig.GetContainerDataDir}}"{{- end}}
   default = ["erofs", "walking"]
 
 [plugins."io.containerd.differ.v1.erofs"]
+{{- if .GetIsKataCc }}
+  enable_dmverity = true
+{{- end}}
   mkfs_options = ["-T0", "--mkfs-time", "--sort=none"]
   enable_tar_index = false
 {{- end}}
@@ -72,6 +80,16 @@ root = "{{.KubeletConfig.GetContainerDataDir}}"{{- end}}
   snapshotter = "overlayfs"
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata.options]
     ConfigPath = "/usr/share/defaults/kata-containers/configuration.toml"
+{{- if .GetIsKataCc }}
+# kata-v2 is not registered: it isn't expected to work with the kata-cc EROFS (dm-verity) settings above.
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc]
+  snapshotter = "erofs"
+  runtime_type = "io.containerd.kata-cc.v2"
+  privileged_without_host_devices = true
+  pod_annotations = ["io.katacontainers.*"]
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc.options]
+    ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-openvmm-azure-snp-runtime-rs.toml"
+{{- else}}
 [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-v2]
   runtime_path = "/usr/local/bin/containerd-shim-kata-v2-rs"
   runtime_type = "io.containerd.kata.v2"
@@ -91,4 +109,5 @@ root = "{{.KubeletConfig.GetContainerDataDir}}"{{- end}}
   pod_annotations = ["io.katacontainers.*"]
   [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.kata-cc.options]
     ConfigPath = "/opt/confidential-containers/share/defaults/kata-containers/configuration-clh-snp.toml"
+{{- end}}
 {{- end}}

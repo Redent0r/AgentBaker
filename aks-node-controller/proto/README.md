@@ -50,6 +50,7 @@ This table is describing the all the `AKSNodeConfig` Fields converted to .go fil
 | `BootstrapProfileContainerRegistryServer` | `string` | Bootstrap profile container registry server URI                                                                                                                                                                                                                          | `BOOTSTRAP_PROFILE_CONTAINER_REGISTRY_SERVER` |
 | `IMDSRestrictionConfig` | `IMDSRestrictionConfig` | IMDS restriction configuration                                                                                                                                                                                                                                           | `ENABLE_IMDS_RESTRICTION`, `INSERT_IMDS_RESTRICTION_RULE_TO_MANGLE_TABLE`|
 | `EnableKmpp` | `bool` | Specifies whether the KMPP key isolation service is enabled on the node and reachable through /var/run/kmpp/dbus. Azure Linux 3.0 only. | `ENABLE_KMPP` |
+| `IsKataCc` | `bool` | Specifies if it is a Kata-CC (OpenVMM SNP) node. Only meaningful when `IsKata` is set. Selects the kata-cc containerd config. | N/A, new |
 
 
 Removed old environment variables from cse_cmd.sh:
