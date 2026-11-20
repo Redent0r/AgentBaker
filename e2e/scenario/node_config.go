@@ -212,6 +212,7 @@ func createAKSNodeConfig(cluster *Cluster, vhd *config.Image, opts ...aksNodeCon
 		VmSize:              config.Config.VMSKU(),
 		IsVhd:               to.Ptr(vhd.Distro.IsVHDDistro()),
 		IsKata:              vhd.Distro.IsKataDistro(),
+		IsKataCc:            vhd.Distro == datamodel.AKSAzureLinuxV3Gen2KataCC,
 		ClusterConfig: &aksnodeconfigv1.ClusterConfig{
 			Location:            *cluster.Model.Location,
 			ResourceGroup:       *cluster.Model.Properties.NodeResourceGroup,
